@@ -70,6 +70,7 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
     return;
 }
 
+// macro for easy free-ing shared memory
 #define free_shared_variables               \
     if (true)                               \
     {                                       \
@@ -84,6 +85,8 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         munmap(help3, sizeof(int));         \
         munmap(queue, sizeof(int));         \
     }
+
+// macro for unmapping and destroying semaphores
 #define unmap_and_destroy_sems                      \
     if (true)                                       \
     {                                               \
@@ -102,27 +105,28 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         munmap(sem_workshop_closed, sizeof(sem_t)); \
         sem_destroy(sem_workshop_closed);           \
     }
+
 int main(int argc, char **argv)
 {
     time_t randtime;
-    srand((unsigned)time(&randtime));
+    srand((unsigned)time(&randtime)); // creating random time seed
 
     setbuf(stderr, NULL);
     if (!check_args(argc, argv))
         return 1;
     params params;
-    fill_struct(&params, argv);
+    fill_struct(&params, argv); // filling up struct with function arguments
 
     FILE *fpointer;
-    fpointer = fopen("proj2.out", "w");
-    if (fpointer == NULL)
+    fpointer = fopen("proj2.out", "w"); // open file 'proj2.out' for writing out log
+    if (fpointer == NULL)               // if file opening was unsuccessfull
     {
         fprintf(stderr, "ERROR : Opening file unsuccessfull\n");
         return 1;
     }
     setbuf(fpointer, NULL);
 
-    //Initialization of shared memory
+    // Declaration of shared memory
     int *needHelp = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     int *elfID = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     int *rID = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -133,7 +137,7 @@ int main(int argc, char **argv)
     int *help2 = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     int *help3 = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     int *queue = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
+    // Initialization of shared memory
     *needHelp = 0;
     *elfID = 0;
     *rID = 0;
@@ -141,7 +145,7 @@ int main(int argc, char **argv)
     *hitchedCount = 0;
     *returnedCount = 0;
     *queue = 0;
-
+    // Declaration of semaphores
     sem_t *sem_drain = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_t *sem_wake_santa = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_t *sem_helped_elfes = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -149,7 +153,7 @@ int main(int argc, char **argv)
     sem_t *sem_last_hitched = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_t *sem_last_returned = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_t *sem_workshop_closed = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
+    // Initialization of semaphores
     sem_init(sem_drain, 1, 1);
     sem_init(sem_wake_santa, 1, 0);
     sem_init(sem_helped_elfes, 1, 0);
@@ -163,57 +167,55 @@ int main(int argc, char **argv)
     int elfP;
     int sobP;
 
-    //Fork main procesu pre vytvorenie subprocessu
-    if ((mainP = fork()) < 0)
+    //Fork from main process to create sub-process
+    if ((mainP = fork()) < 0) // if forking was unsuccessfull
     {
         free_shared_variables;
-
-        munmap(sem_drain, sizeof(sem_t));
-        sem_destroy(sem_drain);
-
-        fprintf(stderr, "%s\n", "Error: fork main process");
+        unmap_and_destroy_sems;
+        fprintf(stderr, "%s\n", "Error: Forking of main process failed");
+        fclose(fpointer);
         return 1;
     }
-
-    if (mainP == 0) //Subprocess pre generovanie pasazierov
+    if (mainP == 0) //Subprocess for generating other sub-processes
     {
         if ((santaP = fork()) < 0)
         {
             free_shared_variables;
             unmap_and_destroy_sems;
-            fprintf(stderr, "%s\n", "Error: fork subprocess for Santa");
+            fprintf(stderr, "%s\n", "Error: Fork for subprocess for Santa failed");
+            fclose(fpointer);
             exit(1);
         }
-
         if (santaP == 0)
         {
-            fprintf(fpointer, "%d %s%s\n", *actionCount, ": Santa", ": going to sleep");
+            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             *actionCount = *actionCount + 1;
 
-            sem_wait(sem_wake_santa);
-            fprintf(fpointer, "%d %s%s\n", *actionCount, ": Santa", ": helping elfes");
+            sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
             *actionCount = *actionCount + 1;
-            fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": Elf ", *help1, ": get help");
+            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
             *actionCount = *actionCount + 1;
-            fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": Elf ", *help2, ": get help");
+            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
             *actionCount = *actionCount + 1;
-            fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": Elf ", *help3, ": get help");
+            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
             *actionCount = *actionCount + 1;
-            fprintf(fpointer, "%d %s%s\n", *actionCount, ": Santa", ": going to sleep");
+            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             *actionCount = *actionCount + 1;
-            for (int i = 0; i < params.NR; i++)
+
+            for (int i = 0; i < params.NR; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
 
             sem_wait(sem_last_returned);
-            fprintf(fpointer, "%d %s%s\n", *actionCount, ": Santa", ": closing workshop");
+            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": closing workshop");
             *actionCount = *actionCount + 1;
             for (int i = 0; i < params.NE; i++)
                 sem_post(sem_workshop_closed);
-            for (int i = 0; i < params.NR; i++)
+            for (int i = 0; i < params.NR; i++) // let all get hitched
                 sem_post(sem_hitch);
 
-            sem_wait(sem_last_hitched);
-            fprintf(fpointer, "%d %s%s\n", *actionCount, ": Santa", ": Christmas started");
+            sem_wait(sem_last_hitched); // wait for last one to get hitched
+            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": Christmas started");
             *actionCount = *actionCount + 1;
             exit(0);
         }
@@ -224,53 +226,45 @@ int main(int argc, char **argv)
                 free_shared_variables;
                 unmap_and_destroy_sems;
                 fprintf(stderr, "%s\n", "Error: fork subprocess for elfs");
+                fclose(fpointer);
                 exit(1);
             }
-
             if (elfP == 0)
             {
                 *elfID = *elfID + 1;
                 int ELFid = *elfID;
 
                 sem_wait(sem_drain);
-                fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": Elf ", ELFid, ": started");
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": started");
                 *actionCount = *actionCount + 1;
                 sem_post(sem_drain);
 
-                usleep(rand() % params.TE);
+                usleep(rand() % params.TE); // random sleep for each elf process
 
                 sem_wait(sem_drain);
-                fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": Elf ", ELFid, ": need help");
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": need help");
                 *actionCount = *actionCount + 1;
                 *needHelp = *needHelp + 1;
-                if (*needHelp == 1)
+                if (*needHelp == 1) // save IDs for elfes in queue
                     *help1 = ELFid;
                 if (*needHelp == 2)
                     *help2 = ELFid;
                 if (*needHelp == 3)
                 {
                     *help3 = ELFid;
-
-                    fprintf(fpointer, "\t\tSemaforujem na santu ze cakaju traja skreckovia\n");
                     sem_post(sem_wake_santa);
                 }
                 sem_post(sem_drain);
 
                 sem_wait(sem_helped_elfes);
-                sem_wait(sem_drain);
-
-                sem_post(sem_drain);
-
                 sem_wait(sem_workshop_closed);
                 sem_wait(sem_drain);
-                fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": Elf ", ELFid, ": taking holidays");
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": taking holidays");
                 *actionCount = *actionCount + 1;
                 sem_post(sem_drain);
-
                 exit(0);
             }
         }
-
         for (int k = 0; k < params.NR; k++)
         {
             if ((sobP = fork()) < 0)
@@ -278,54 +272,45 @@ int main(int argc, char **argv)
                 free_shared_variables;
                 unmap_and_destroy_sems;
                 fprintf(stderr, "%s\n", "Error: fork subprocess for sobs");
+                fclose(fpointer);
                 exit(1);
             }
-
             if (sobP == 0)
             {
                 *rID = *rID + 1;
                 int Rid = *rID;
 
                 sem_wait(sem_drain);
-                fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": RD ", Rid, ": rstarted");
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": rstarted");
                 *actionCount = *actionCount + 1;
                 sem_post(sem_drain);
 
-                usleep(((rand() % params.TR) + params.TR) / params.TR);
+                usleep(((rand() % params.TR) + params.TR) / params.TR); // random sleep for each process
 
                 sem_wait(sem_drain);
                 *returnedCount = *returnedCount + 1;
-                fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": RD ", Rid, ": return home");
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": return home");
                 *actionCount = *actionCount + 1;
-                if (*returnedCount == params.NR)
-                {
-                    fprintf(fpointer, "\t\tSemaforujem na santu ze dosiel posledny sob\n");
+                if (*returnedCount == params.NR) // if count of returned is equal to count of all
                     sem_post(sem_last_returned);
-                }
                 sem_post(sem_drain);
 
                 sem_wait(sem_hitch);
 
                 sem_wait(sem_drain);
                 *hitchedCount = *hitchedCount + 1;
-                fprintf(fpointer, "%d %s %d %s\n", *actionCount, ": RD ", Rid, ": get hitched");
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": get hitched");
                 *actionCount = *actionCount + 1;
-                if (*hitchedCount == params.NR)
-                {
-                    fprintf(fpointer, "\t\tSemaforujem na ukoncenie santu \n");
+                if (*hitchedCount == params.NR) // if count of hitched is equal to count of all
                     sem_post(sem_last_hitched);
-                }
                 sem_post(sem_drain);
                 exit(0);
             }
         }
-
         exit(0);
     }
-
     free_shared_variables;
     unmap_and_destroy_sems;
     fclose(fpointer);
-    printf("Done!\n");
     return 0;
 }
