@@ -72,8 +72,7 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
 
 // macro for easy free-ing shared memory
 #define free_shared_variables               \
-    if (true)                               \
-    {                                       \
+    do {                                    \
         munmap(needHelp, sizeof(int));      \
         munmap(elfID, sizeof(int));         \
         munmap(rID, sizeof(int));           \
@@ -84,12 +83,11 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         munmap(help2, sizeof(int));         \
         munmap(help3, sizeof(int));         \
         munmap(queue, sizeof(int));         \
-    }
+    }while (0)
 
 // macro for unmapping and destroying semaphores
 #define unmap_and_destroy_sems                      \
-    if (true)                                       \
-    {                                               \
+    do {                                            \
         munmap(sem_drain, sizeof(sem_t));           \
         sem_destroy(sem_drain);                     \
         munmap(sem_wake_santa, sizeof(sem_t));      \
@@ -104,7 +102,7 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         sem_destroy(sem_last_returned);             \
         munmap(sem_workshop_closed, sizeof(sem_t)); \
         sem_destroy(sem_workshop_closed);           \
-    }
+    }while (0)
 
 int main(int argc, char **argv)
 {
