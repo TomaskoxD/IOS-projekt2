@@ -12,4 +12,4 @@ zip:
 	zip -r proj2.zip proj2.c Makefile
 
 run: all
-	./$(TARGET) 2 2 100 100
+	./$(TARGET) 10 10 999 999
