@@ -72,7 +72,7 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
 
 // macro for easy free-ing shared memory
 #define free_shared_variables               \
-    if (true)                               \
+    do                                      \
     {                                       \
         munmap(needHelp, sizeof(int));      \
         munmap(elfID, sizeof(int));         \
@@ -84,11 +84,11 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         munmap(help2, sizeof(int));         \
         munmap(help3, sizeof(int));         \
         munmap(queue, sizeof(int));         \
-    }
+    } while (0)
 
 // macro for unmapping and destroying semaphores
 #define unmap_and_destroy_sems                      \
-    if (true)                                       \
+    do                                              \
     {                                               \
         munmap(sem_drain, sizeof(sem_t));           \
         sem_destroy(sem_drain);                     \
@@ -104,7 +104,7 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         sem_destroy(sem_last_returned);             \
         munmap(sem_workshop_closed, sizeof(sem_t)); \
         sem_destroy(sem_workshop_closed);           \
-    }
+    } while (0)
 
 int main(int argc, char **argv)
 {
@@ -190,32 +190,30 @@ int main(int argc, char **argv)
         {
             sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             sem_post(sem_drain);
 
             sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
             sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
-            *actionCount = *actionCount + 1;
-            sem_post(sem_drain);
-
+            (*actionCount)++;
             for (int i = 0; i < params.NR; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
+            sem_post(sem_drain);
 
             sem_wait(sem_last_returned);
             sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": closing workshop");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             sem_post(sem_drain);
-
             for (int i = 0; i < params.NE; i++)
                 sem_post(sem_workshop_closed);
             for (int i = 0; i < params.NR; i++) // let all get hitched
@@ -224,7 +222,7 @@ int main(int argc, char **argv)
             sem_wait(sem_last_hitched); // wait for last one to get hitched
             sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": Christmas started");
-            *actionCount = *actionCount + 1;
+            (*actionCount)++;
             sem_post(sem_drain);
             exit(0);
         }
@@ -245,15 +243,15 @@ int main(int argc, char **argv)
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": started");
-                *actionCount = *actionCount + 1;
+                (*actionCount)++;
                 sem_post(sem_drain);
 
                 usleep(rand() % params.TE); // random sleep for each elf process
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": need help");
-                *actionCount = *actionCount + 1;
-                *needHelp = *needHelp + 1;
+                (*actionCount)++;
+                (*needHelp)++;
                 if (*needHelp == 1) // save IDs for elfes in queue
                     *help1 = ELFid;
                 if (*needHelp == 2)
@@ -269,7 +267,7 @@ int main(int argc, char **argv)
                 sem_wait(sem_workshop_closed);
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": taking holidays");
-                *actionCount = *actionCount + 1;
+                (*actionCount)++;
                 sem_post(sem_drain);
                 exit(0);
             }
@@ -291,15 +289,15 @@ int main(int argc, char **argv)
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": rstarted");
-                *actionCount = *actionCount + 1;
+                (*actionCount)++;
                 sem_post(sem_drain);
 
                 usleep(((rand() % params.TR) + params.TR) / params.TR); // random sleep for each process
 
                 sem_wait(sem_drain);
-                *returnedCount = *returnedCount + 1;
+                (*returnedCount)++;
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": return home");
-                *actionCount = *actionCount + 1;
+                (*actionCount)++;
                 if (*returnedCount == params.NR) // if count of returned is equal to count of all
                     sem_post(sem_last_returned);
                 sem_post(sem_drain);
@@ -307,9 +305,9 @@ int main(int argc, char **argv)
                 sem_wait(sem_hitch);
 
                 sem_wait(sem_drain);
-                *hitchedCount = *hitchedCount + 1;
+                (*hitchedCount)++;
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": get hitched");
-                *actionCount = *actionCount + 1;
+                (*actionCount)++;
                 if (*hitchedCount == params.NR) // if count of hitched is equal to count of all
                     sem_post(sem_last_hitched);
                 sem_post(sem_drain);
