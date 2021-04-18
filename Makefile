@@ -6,10 +6,10 @@ all:
 	gcc $(CFLAGS) $(TARGET).c -o $(TARGET) -lrt -pthread
 
 clean:
-	rm -f proj2 proj2.out
+	rm -f proj2 proj2.out proj2.zip
 
 zip:
 	zip -r proj2.zip proj2.c Makefile
 
 run: all
-	./$(TARGET) 2 2 100 100
+	./$(TARGET) 5 5 900 900

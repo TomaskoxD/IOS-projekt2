@@ -188,10 +188,13 @@ int main(int argc, char **argv)
         }
         if (santaP == 0)
         {
+            sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             *actionCount = *actionCount + 1;
+            sem_post(sem_drain);
 
             sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+            sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
             *actionCount = *actionCount + 1;
             fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
@@ -202,21 +205,27 @@ int main(int argc, char **argv)
             *actionCount = *actionCount + 1;
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             *actionCount = *actionCount + 1;
+            sem_post(sem_drain);
 
             for (int i = 0; i < params.NR; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
 
             sem_wait(sem_last_returned);
+            sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": closing workshop");
             *actionCount = *actionCount + 1;
+            sem_post(sem_drain);
+
             for (int i = 0; i < params.NE; i++)
                 sem_post(sem_workshop_closed);
             for (int i = 0; i < params.NR; i++) // let all get hitched
                 sem_post(sem_hitch);
 
             sem_wait(sem_last_hitched); // wait for last one to get hitched
+            sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": Christmas started");
             *actionCount = *actionCount + 1;
+            sem_post(sem_drain);
             exit(0);
         }
         for (int k = 0; k < params.NE; k++)
