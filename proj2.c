@@ -205,7 +205,7 @@ int main(int argc, char **argv)
             (*actionCount)++;
             sem_post(sem_drain);
 
-            for (int i = 0; i < params.NR; i++) // notify all elfes that Santa has helped them
+            for (int i = 0; i < params.NE; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
 
             sem_wait(sem_last_returned);
