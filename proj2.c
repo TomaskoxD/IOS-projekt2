@@ -209,13 +209,13 @@ int main(int argc, char **argv)
 
             for (int i = 0; i < params.NE; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
-            sem_post(sem_drain);
 
             sem_wait(sem_last_returned);
             sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": closing workshop");
             (*actionCount)++;
             sem_post(sem_drain);
+
             for (int i = 0; i < params.NE; i++)
                 sem_post(sem_workshop_closed);
             for (int i = 0; i < params.NR; i++) // let all get hitched
@@ -228,7 +228,8 @@ int main(int argc, char **argv)
             sem_post(sem_drain);
             exit(0);
         }
-        for (int k = 0; k < params.NE; k++)
+
+        for (int i = 0; i < params.NE; i++)
         {
             if ((elfP = fork()) < 0)
             {
@@ -274,7 +275,8 @@ int main(int argc, char **argv)
                 exit(0);
             }
         }
-        for (int k = 0; k < params.NR; k++)
+
+        for (int i = 0; i < params.NR; i++)
         {
             if ((sobP = fork()) < 0)
             {
@@ -305,7 +307,6 @@ int main(int argc, char **argv)
                 sem_post(sem_drain);
 
                 sem_wait(sem_hitch);
-
                 sem_wait(sem_drain);
                 (*hitchedCount)++;
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": get hitched");
