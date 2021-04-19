@@ -72,7 +72,8 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
 
 // macro for easy free-ing shared memory
 #define free_shared_variables               \
-    do {                                    \
+    do                                      \
+    {                                       \
         munmap(needHelp, sizeof(int));      \
         munmap(elfID, sizeof(int));         \
         munmap(rID, sizeof(int));           \
@@ -83,11 +84,12 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         munmap(help2, sizeof(int));         \
         munmap(help3, sizeof(int));         \
         munmap(queue, sizeof(int));         \
-    }while (0)
+    } while (0)
 
 // macro for unmapping and destroying semaphores
 #define unmap_and_destroy_sems                      \
-    do {                                            \
+    do                                              \
+    {                                               \
         munmap(sem_drain, sizeof(sem_t));           \
         sem_destroy(sem_drain);                     \
         munmap(sem_wake_santa, sizeof(sem_t));      \
@@ -102,7 +104,7 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         sem_destroy(sem_last_returned);             \
         munmap(sem_workshop_closed, sizeof(sem_t)); \
         sem_destroy(sem_workshop_closed);           \
-    }while (0)
+    } while (0)
 
 int main(int argc, char **argv)
 {
@@ -186,13 +188,13 @@ int main(int argc, char **argv)
         }
         if (santaP == 0)
         {
-	    sem_wait(sem_drain);
+            sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             (*actionCount)++;
-	    sem_post(sem_drain);
-            sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+            sem_post(sem_drain);
 
-	    sem_wait(sem_drain);
+            sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+            sem_wait(sem_drain);
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
             (*actionCount)++;
             fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
@@ -207,6 +209,7 @@ int main(int argc, char **argv)
 
             for (int i = 0; i < params.NE; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
+            sem_post(sem_drain);
 
             sem_wait(sem_last_returned);
             sem_wait(sem_drain);
@@ -223,7 +226,7 @@ int main(int argc, char **argv)
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": Christmas started");
             (*actionCount)++;
             sem_post(sem_drain);
-	    exit(0);
+            exit(0);
         }
         for (int k = 0; k < params.NE; k++)
         {
