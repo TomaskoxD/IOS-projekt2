@@ -31,19 +31,27 @@ bool is_in_range(int arg, char *string) // function to check if string is in ran
     int value = atoi(string);
     if (arg == 2)
     {
-        if (value >= 20)
+        if (value >= 20 || value == 0)
         {
-            fprintf(stderr, "ERROR : Argument at %d. position does not equal parameters of program ( must be <20 <=> was %d ) \n", arg, value);
+            fprintf(stderr, "ERROR : Argument at %d. position does not equal parameters of program ( must be 0<x<20 <=> was %d ) \n", arg, value);
+            return false;
+        }
+    }
+    else if(arg == 3 || arg == 4)
+    {
+        if (value > 1000)
+        {
+            fprintf(stderr, "ERROR : Argument at %d. position does not equal parameters of program ( must be 0<=x<=1000 <=> was %d ) \n", arg, value);
             return false;
         }
     }
     else
     {
-        if (value >= 1000)
-        {
-            fprintf(stderr, "ERROR : Argument at %d. position does not equal parameters of program ( must be <1000 <=> was %d ) \n", arg, value);
-            return false;
-        }
+	if (value >= 1000 || value == 0)
+	{
+            fprintf(stderr, "ERROR : Argument at %d. position does not equal parameters of program ( must be 0<x<1000 <==> was %d ) \n", arg, value);
+	    return false;
+	}
     }
     return true;
 }
@@ -192,21 +200,21 @@ int main(int argc, char **argv)
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             (*actionCount)++;
             sem_post(sem_drain);
-		if(params.NE >= 3){
-	            sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
-	            sem_wait(sem_drain);
-	            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
-	            (*actionCount)++;
-	            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
-	            (*actionCount)++;
-	            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
-	            (*actionCount)++;
-	            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
-	            (*actionCount)++;
-	            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
-	            (*actionCount)++;
-	            sem_post(sem_drain);
-		}
+            if(params.NE >= 3){
+	        sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+	        sem_wait(sem_drain);
+	        fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
+	        (*actionCount)++;
+	        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
+	        (*actionCount)++;
+	        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
+	        (*actionCount)++;
+	        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
+	        (*actionCount)++;
+	        fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
+	        (*actionCount)++;
+	        sem_post(sem_drain);
+	    }
             for (int i = 0; i < params.NE; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
 
