@@ -192,21 +192,21 @@ int main(int argc, char **argv)
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             (*actionCount)++;
             sem_post(sem_drain);
-
-            sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
-            sem_wait(sem_drain);
-            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
-            (*actionCount)++;
-            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
-            (*actionCount)++;
-            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
-            (*actionCount)++;
-            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
-            (*actionCount)++;
-            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
-            (*actionCount)++;
-            sem_post(sem_drain);
-
+		if(params.NE >= 3){
+	            sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+	            sem_wait(sem_drain);
+	            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
+	            (*actionCount)++;
+	            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
+	            (*actionCount)++;
+	            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
+	            (*actionCount)++;
+	            fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
+	            (*actionCount)++;
+	            fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
+	            (*actionCount)++;
+	            sem_post(sem_drain);
+		}
             for (int i = 0; i < params.NE; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
 
