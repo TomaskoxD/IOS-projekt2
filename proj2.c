@@ -257,7 +257,7 @@ int main(int argc, char **argv)
                 (*actionCount)++;
                 sem_post(sem_drain);
 
-                usleep(rand() % params.TE); // random sleep for each elf process
+                usleep((rand() % params.TE)*1000); // random sleep for each elf process
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": need help");
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
                 (*actionCount)++;
                 sem_post(sem_drain);
 
-                usleep(((rand() % params.TR) + params.TR) / params.TR); // random sleep for each process
+                usleep((((rand() % params.TR) + params.TR) / params.TR)*1000); // random sleep for each process
 
                 sem_wait(sem_drain);
                 (*returnedCount)++;
