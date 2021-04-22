@@ -37,7 +37,7 @@ bool is_in_range(int arg, char *string) // function to check if string is in ran
             return false;
         }
     }
-    else if(arg == 3 || arg == 4)
+    else if (arg == 3 || arg == 4)
     {
         if (value > 1000)
         {
@@ -47,11 +47,11 @@ bool is_in_range(int arg, char *string) // function to check if string is in ran
     }
     else
     {
-	if (value >= 1000 || value == 0)
-	{
+        if (value >= 1000 || value == 0)
+        {
             fprintf(stderr, "ERROR : Argument at %d. position does not equal parameters of program ( must be 0<x<1000 <==> was %d ) \n", arg, value);
-	    return false;
-	}
+            return false;
+        }
     }
     return true;
 }
@@ -98,20 +98,20 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
 #define unmap_and_destroy_sems                      \
     do                                              \
     {                                               \
-        munmap(sem_drain, sizeof(sem_t));           \
         sem_destroy(sem_drain);                     \
-        munmap(sem_wake_santa, sizeof(sem_t));      \
+        munmap(sem_drain, sizeof(sem_t));           \
         sem_destroy(sem_wake_santa);                \
-        munmap(sem_helped_elfes, sizeof(sem_t));    \
+        munmap(sem_wake_santa, sizeof(sem_t));      \
         sem_destroy(sem_helped_elfes);              \
-        munmap(sem_hitch, sizeof(sem_t));           \
+        munmap(sem_helped_elfes, sizeof(sem_t));    \
         sem_destroy(sem_hitch);                     \
-        munmap(sem_last_hitched, sizeof(sem_t));    \
+        munmap(sem_hitch, sizeof(sem_t));           \
         sem_destroy(sem_last_hitched);              \
-        munmap(sem_last_returned, sizeof(sem_t));   \
+        munmap(sem_last_hitched, sizeof(sem_t));    \
         sem_destroy(sem_last_returned);             \
-        munmap(sem_workshop_closed, sizeof(sem_t)); \
+        munmap(sem_last_returned, sizeof(sem_t));   \
         sem_destroy(sem_workshop_closed);           \
+        munmap(sem_workshop_closed, sizeof(sem_t)); \
     } while (0)
 
 int main(int argc, char **argv)
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     int elfP;
     int sobP;
 
-    //Fork from main process to create sub-process
+    //Fork of main process to create sub-process
     if ((mainP = fork()) < 0) // if forking was unsuccessfull
     {
         free_shared_variables;
@@ -200,21 +200,22 @@ int main(int argc, char **argv)
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
             (*actionCount)++;
             sem_post(sem_drain);
-            if(params.NE >= 3){
-	        sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
-	        sem_wait(sem_drain);
-	        fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
-	        (*actionCount)++;
-	        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
-	        (*actionCount)++;
-	        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
-	        (*actionCount)++;
-	        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
-	        (*actionCount)++;
-	        fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
-	        (*actionCount)++;
-	        sem_post(sem_drain);
-	    }
+            if (params.NE >= 3) // if there is less than 3 elves in total, Santa is waiting till all rein.. return
+            {
+                sem_wait(sem_wake_santa); // waiting for 3rd elf to wake santa up
+                sem_wait(sem_drain);
+                fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": helping elves");
+                (*actionCount)++;
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help1, ": get help");
+                (*actionCount)++;
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help2, ": get help");
+                (*actionCount)++;
+                fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", *help3, ": get help");
+                (*actionCount)++;
+                fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": going to sleep");
+                (*actionCount)++;
+                sem_post(sem_drain);
+            }
             for (int i = 0; i < params.NE; i++) // notify all elfes that Santa has helped them
                 sem_post(sem_helped_elfes);
 
@@ -257,7 +258,7 @@ int main(int argc, char **argv)
                 (*actionCount)++;
                 sem_post(sem_drain);
 
-                usleep((rand() % params.TE)*1000); // random sleep for each elf process
+                usleep((rand() % params.TE) * 1000); // random sleep for each elf process
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": need help");
@@ -304,7 +305,7 @@ int main(int argc, char **argv)
                 (*actionCount)++;
                 sem_post(sem_drain);
 
-                usleep((((rand() % params.TR) + params.TR) / params.TR)*1000); // random sleep for each process
+                usleep((((rand() % params.TR) + params.TR) / 2) * 1000); // random sleep for each process
 
                 sem_wait(sem_drain);
                 (*returnedCount)++;
