@@ -73,8 +73,14 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
 {
     params->NE = atoi(argv[1]);
     params->NR = atoi(argv[2]);
-    params->TE = atoi(argv[3]);
-    params->TR = atoi(argv[4]);
+    if (atoi(argv[3]) != 0 )
+	params->TE = atoi(argv[3]);
+    else
+        params->TE = 1;
+    if (atoi(argv[4]) != 0 )
+        params->TR = atoi(argv[4]);
+    else
+        params->TR = 1;
     return;
 }
 
