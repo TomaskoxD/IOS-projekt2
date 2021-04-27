@@ -269,6 +269,8 @@ int main(int argc, char **argv)
                 int ELFid = *elfID;
                 sem_post(sem_drain);
 
+		srand((unsigned)time(&randtime) * ELFid); // creating random time seed for each process
+
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": started");
                 (*actionCount)++;
@@ -332,6 +334,8 @@ int main(int argc, char **argv)
                 *rID = *rID + 1;
                 int Rid = *rID;
                 sem_post(sem_drain);
+
+		srand((unsigned)time(&randtime) * Rid); // creating random time seed for each process
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": rstarted");
