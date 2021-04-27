@@ -73,11 +73,11 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
 {
     params->NE = atoi(argv[1]);
     params->NR = atoi(argv[2]);
-    if (atoi(argv[3]) != 0 )
-	params->TE = atoi(argv[3]);
+    if (atoi(argv[3]) != 0)
+        params->TE = atoi(argv[3]);
     else
         params->TE = 1;
-    if (atoi(argv[4]) != 0 )
+    if (atoi(argv[4]) != 0)
         params->TR = atoi(argv[4]);
     else
         params->TR = 1;
@@ -118,6 +118,8 @@ void fill_struct(params *params, char **argv) // function to fill up struct with
         munmap(sem_last_returned, sizeof(sem_t));   \
         sem_destroy(sem_workshop_closed);           \
         munmap(sem_workshop_closed, sizeof(sem_t)); \
+        sem_destroy(sem_main_wait);                 \
+        munmap(sem_main_wait, sizeof(sem_t));       \
     } while (0)
 
 int main(int argc, char **argv)
@@ -167,6 +169,8 @@ int main(int argc, char **argv)
     sem_t *sem_last_hitched = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_t *sem_last_returned = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_t *sem_workshop_closed = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    sem_t *sem_main_wait = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
     // Initialization of semaphores
     sem_init(sem_drain, 1, 1);
     sem_init(sem_wake_santa, 1, 0);
@@ -175,6 +179,7 @@ int main(int argc, char **argv)
     sem_init(sem_last_hitched, 1, 0);
     sem_init(sem_last_returned, 1, 0);
     sem_init(sem_workshop_closed, 1, 0);
+    sem_init(sem_main_wait, 1, 0);
 
     int mainP;
     int santaP;
@@ -188,7 +193,7 @@ int main(int argc, char **argv)
         unmap_and_destroy_sems;
         fprintf(stderr, "%s\n", "Error: Forking of main process failed");
         fclose(fpointer);
-        return 1;
+        exit(1);
     }
     if (mainP == 0) //Subprocess for generating other sub-processes
     {
@@ -241,6 +246,9 @@ int main(int argc, char **argv)
             fprintf(fpointer, "%d%s%s\n", *actionCount, ": Santa", ": Christmas started");
             (*actionCount)++;
             sem_post(sem_drain);
+
+            sem_post(sem_main_wait);
+
             exit(0);
         }
 
@@ -256,8 +264,10 @@ int main(int argc, char **argv)
             }
             if (elfP == 0)
             {
+                sem_wait(sem_drain);
                 *elfID = *elfID + 1;
                 int ELFid = *elfID;
+                sem_post(sem_drain);
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": started");
@@ -282,11 +292,26 @@ int main(int argc, char **argv)
                 sem_post(sem_drain);
 
                 sem_wait(sem_helped_elfes);
+
+                if (params.NE >= 3) // if there is less than 3 elves in total, no elf will get help from Santa
+                    if (*help1 == ELFid || *help2 == ELFid || *help3 == ELFid)
+                    {
+                        usleep((rand() % params.TE) * 1000); // random sleep for required elf process
+
+                        sem_wait(sem_drain);
+                        fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": need help");
+                        (*actionCount)++;
+                        sem_post(sem_drain);
+                    }
+
                 sem_wait(sem_workshop_closed);
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": Elf ", ELFid, ": taking holidays");
                 (*actionCount)++;
                 sem_post(sem_drain);
+
+                sem_post(sem_main_wait);
+
                 exit(0);
             }
         }
@@ -303,8 +328,10 @@ int main(int argc, char **argv)
             }
             if (sobP == 0)
             {
+                sem_wait(sem_drain);
                 *rID = *rID + 1;
                 int Rid = *rID;
+                sem_post(sem_drain);
 
                 sem_wait(sem_drain);
                 fprintf(fpointer, "%d%s %d%s\n", *actionCount, ": RD ", Rid, ": rstarted");
@@ -329,13 +356,21 @@ int main(int argc, char **argv)
                 if (*hitchedCount == params.NR) // if count of hitched is equal to count of all
                     sem_post(sem_last_hitched);
                 sem_post(sem_drain);
+
+                sem_post(sem_main_wait);
+
                 exit(0);
             }
         }
         exit(0);
     }
+
+    //Hlavny proces caka na ukoncenie vsetkych pasazierov + vozika
+    for (int i = 0; i < params.NE + params.NR + 1; i++)
+        sem_wait(sem_main_wait);
+
     free_shared_variables;
     unmap_and_destroy_sems;
     fclose(fpointer);
-    return 0;
+    exit(0);
 }

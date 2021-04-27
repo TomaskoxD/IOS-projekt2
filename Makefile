@@ -6,7 +6,7 @@ all:
 	gcc $(CFLAGS) $(TARGET).c -o $(TARGET) -lrt -pthread
 
 clean:
-	rm -f proj2 proj2.out proj2.zip
+	rm -rf proj2 proj2.out proj2.zip
 
 zip:
 	zip -r proj2.zip proj2.c Makefile
