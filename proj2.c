@@ -128,13 +128,13 @@ int main(int argc, char **argv)
     srand((unsigned)time(&randtime)); // creating random time seed
 
     setbuf(stderr, NULL);
-    if (!check_args(argc, argv))
+    if (!check_args(argc, argv)) // check if all arguments are correct 
         return 1;
-    params params;
+    params params; // declare struct 
     fill_struct(&params, argv); // filling up struct with function arguments
 
     FILE *fpointer;
-    fpointer = fopen("proj2.out", "w"); // open file 'proj2.out' for writing out log
+    fpointer = fopen("proj2.out", "w"); // open file 'proj2.out' for writing out log data
     if (fpointer == NULL)               // if file opening was unsuccessfull
     {
         fprintf(stderr, "ERROR : Opening file unsuccessfull\n");
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     sem_t *sem_main_wait = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     // Initialization of semaphores
-    sem_init(sem_drain, 1, 1);
+    sem_init(sem_drain, 1, 1); // mutex semaphore
     sem_init(sem_wake_santa, 1, 0);
     sem_init(sem_helped_elfes, 1, 0);
     sem_init(sem_hitch, 1, 0);
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
         {
             free_shared_variables;
             unmap_and_destroy_sems;
-            fprintf(stderr, "%s\n", "Error: Fork for subprocess for Santa failed");
+            fprintf(stderr, "%s\n", "Error: Fork for subprocess Santa failed");
             fclose(fpointer);
             exit(1);
         }
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
             {
                 free_shared_variables;
                 unmap_and_destroy_sems;
-                fprintf(stderr, "%s\n", "Error: fork subprocess for elfs");
+                fprintf(stderr, "%s\n", "Error: fork subprocess elfs failed");
                 fclose(fpointer);
                 exit(1);
             }
@@ -324,7 +324,7 @@ int main(int argc, char **argv)
             {
                 free_shared_variables;
                 unmap_and_destroy_sems;
-                fprintf(stderr, "%s\n", "Error: fork subprocess for sobs");
+                fprintf(stderr, "%s\n", "Error: fork for subprocess reindeer failed");
                 fclose(fpointer);
                 exit(1);
             }
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    //Hlavny proces caka na ukoncenie vsetkych pasazierov + vozika
+    // wait for all processes to finish
     for (int i = 0; i < params.NE + params.NR + 1; i++)
         sem_wait(sem_main_wait);
 
