@@ -11,5 +11,5 @@ clean:
 zip:
 	zip -r proj2.zip proj2.c Makefile
 
-run: all
-	./$(TARGET) 7 8 900 900
+run: clean all
+	./$(TARGET) 7 8 900 900 && sleep 1 && cat proj2.out
